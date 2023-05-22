@@ -1,4 +1,9 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt')
+
+function emailValidation(email) {
+    return /^([\w-\.]+@([\w-]+\.)+[\w-]+)?$/.test(email);
+}
 
 const UserSchema = new mongoose.Schema({
     firstName: {
@@ -9,13 +14,13 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: [true, "Last name is required"]
     },
-    validate: {
-        validator: val => /^([\w-\.]+@([\w-]+\.)+[\w-]+)?$/.test(val),
-        message: "Please enter a valid email"
-    },
     email: {
         type: String,
-        required: [true, "Email is required"]
+        required: [true, "Email is required"],
+        validate: {
+            validator: emailValidation,
+            message: "Please enter a valid email"
+        }
     },
     password: {
         type: String,
@@ -23,8 +28,6 @@ const UserSchema = new mongoose.Schema({
         minlength: [8, "Password must be 8 characters or longer"]
     }
 }, { timestamps: true });
-
-module.exports = mongoose.model("User", UserSchema)
 
 UserSchema.virtual('confirmPassword')
     .get(() => this._confirmPassword)
@@ -36,17 +39,22 @@ UserSchema.pre('validate', function (next) {
     }
     next();
 });
-
-// near the top is a good place to group our imports
-const bcrypt = require('bcrypt');
 // this should go after 
-UserSchema.pre('save', function (next) {
-    bcrypt.hash(this.password, 10)
-        .then(hash => {
-            this.password = hash;
-            next();
-        });
+UserSchema.pre('save', async function (next) {
+//     bcrypt.hash(this.password, 10)
+//         .then(hash => {
+//             this.password = hash;
+//             next();
+//         });
+// });
+try {
+    const hash = await bcrypt.hash(this.password, 10);
+    this.password = hash;
+    next();
+} catch (error) {
+    next(error);
+}
 });
-
+module.exports = mongoose.model("User", UserSchema)
 
 
