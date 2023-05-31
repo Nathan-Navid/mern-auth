@@ -4,6 +4,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 const port = 8000;
+SECRET_KEY = "This is my Future"
 
 
 require('./config/mongoose.config');
